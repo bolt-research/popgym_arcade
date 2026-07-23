@@ -5,6 +5,7 @@ import argparse
 import jax
 import numpy as np
 import pygame
+from gymnax.environments import spaces
 
 import popgym_arcade
 import popgym_arcade.registration
@@ -57,6 +58,8 @@ def play(args):
     key, reset_key = jax.random.split(key)
     observation, env_state = env_reset(reset_key, env_params)
     done = False
+    action_space = env.action_space(env_params)
+    continuous_actions = isinstance(action_space, spaces.Box)
 
     # Pygame setup
     pygame.init()
@@ -68,16 +71,18 @@ def play(args):
     print(observation.dtype)
     surface = pygame.surfarray.make_surface(to_surf(observation))
 
-    # Action mappings (modify based on your environment's action space)
-    ACTION_MEANINGS = {
+    # Discrete action mappings
+    action_meanings = {
         pygame.K_UP: 0,
         pygame.K_DOWN: 1,
         pygame.K_LEFT: 2,
         pygame.K_RIGHT: 3,
         pygame.K_SPACE: 4,
-        # Add more keys if needed
     }
-    print("Controls: up, down, left, right, spacebar")
+    if continuous_actions:
+        print("Controls: hold left/right to apply continuous force; release for zero")
+    else:
+        print("Controls: up, down, left, right, spacebar")
 
     while running:
         # Handle events
@@ -85,9 +90,20 @@ def play(args):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            elif event.type == pygame.KEYDOWN:
-                if event.key in ACTION_MEANINGS:
-                    action = ACTION_MEANINGS[event.key]
+            elif (
+                not continuous_actions
+                and event.type == pygame.KEYDOWN
+                and event.key in action_meanings
+            ):
+                action = action_meanings[event.key]
+
+        if continuous_actions:
+            keys = pygame.key.get_pressed()
+            action = np.zeros(action_space.shape, dtype=np.float32)
+            if keys[pygame.K_LEFT] and not keys[pygame.K_RIGHT]:
+                action.flat[0] = -1.0
+            elif keys[pygame.K_RIGHT] and not keys[pygame.K_LEFT]:
+                action.flat[0] = 1.0
 
         # Render to screen
         screen.blit(surface, (0, 0))

@@ -8,6 +8,9 @@ from popgym_arcade.environments import (
     CartPoleEasy,
     CartPoleHard,
     CartPoleMedium,
+    ContinuousCartPoleEasy,
+    ContinuousCartPoleHard,
+    ContinuousCartPoleMedium,
     CountRecallEasy,
     CountRecallHard,
     CountRecallMedium,
@@ -39,6 +42,12 @@ def make(env_id: str, **env_kwargs):
         env = CartPoleMedium(**env_kwargs)
     elif env_id == "CartPoleHard":
         env = CartPoleHard(**env_kwargs)
+    elif env_id == "ContinuousCartPoleEasy":
+        env = ContinuousCartPoleEasy(**env_kwargs)
+    elif env_id == "ContinuousCartPoleMedium":
+        env = ContinuousCartPoleMedium(**env_kwargs)
+    elif env_id == "ContinuousCartPoleHard":
+        env = ContinuousCartPoleHard(**env_kwargs)
     elif env_id == "NoisyCartPoleEasy":
         env = NoisyCartPoleEasy(**env_kwargs)
     elif env_id == "NoisyCartPoleMedium":
@@ -103,6 +112,9 @@ REGISTERED_ENVIRONMENTS = [
     "CartPoleEasy",
     "CartPoleMedium",
     "CartPoleHard",
+    "ContinuousCartPoleEasy",
+    "ContinuousCartPoleMedium",
+    "ContinuousCartPoleHard",
     "NoisyCartPoleEasy",
     "NoisyCartPoleMedium",
     "NoisyCartPoleHard",

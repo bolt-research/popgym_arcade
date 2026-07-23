@@ -192,6 +192,22 @@ class CartPole(environment.Environment[EnvState, EnvParams]):
         """Return the default environment parameters."""
         return EnvParams()
 
+    def _action_to_force(
+        self, action: Union[int, float, chex.Array], params: EnvParams
+    ) -> chex.Array:
+        """Convert a discrete action to the force applied to the cart."""
+        return lax.cond(
+            action == 2,
+            lambda _: -params.force_mag,
+            lambda _: lax.cond(
+                action == 3,
+                lambda _: params.force_mag,
+                lambda _: 0.0,
+                operand=None,
+            ),
+            operand=None,
+        )
+
     @functools.partial(jax.jit, static_argnums=(0,))
     def step_env(
         self,
@@ -219,17 +235,7 @@ class CartPole(environment.Environment[EnvState, EnvParams]):
         """
         prev_terminal = self.is_terminal(state, params)
 
-        force = lax.cond(
-            action == 2,
-            lambda _: -params.force_mag,
-            lambda _: lax.cond(
-                action == 3,
-                lambda _: params.force_mag,
-                lambda _: 0.0,
-                operand=None,
-            ),
-            operand=None,
-        )
+        force = self._action_to_force(action, params)
 
         # Calculate trigonometric values
 
@@ -554,16 +560,68 @@ class CartPoleHard(CartPole):
         super().__init__(max_steps_in_episode=600, **kwargs)
 
 
-class NoisyCartPoleEasy(CartPole):
+class ContinuousCartPole(CartPole):
+    """
+    CartPole with a one-dimensional continuous action space.
+
+    Actions are normalized to ``[-1, 1]`` and scaled by ``force_mag``. Values
+    outside the action-space bounds are clipped before the physics update.
+    """
+
+    def _action_to_force(
+        self, action: Union[int, float, chex.Array], params: EnvParams
+    ) -> chex.Array:
+        """Scale the normalized continuous action to a cart force."""
+        normalized_action = jnp.ravel(jnp.asarray(action, dtype=jnp.float32))[0]
+        return jnp.clip(normalized_action, -1.0, 1.0) * params.force_mag
+
+    @property
+    def name(self) -> str:
+        """Environment name."""
+        return "ContPole"
+
+    @property
+    def num_actions(self) -> int:
+        """Number of continuous action dimensions."""
+        return 1
+
+    def action_space(self, params: Optional[EnvParams] = None) -> spaces.Box:
+        """Normalized force applied to the cart."""
+        return spaces.Box(-1.0, 1.0, (1,), dtype=jnp.float32)
+
+
+class ContinuousCartPoleEasy(ContinuousCartPole):
+    def __init__(self, **kwargs):
+        super().__init__(max_steps_in_episode=200, **kwargs)
+
+
+class ContinuousCartPoleMedium(ContinuousCartPole):
+    def __init__(self, **kwargs):
+        super().__init__(max_steps_in_episode=400, **kwargs)
+
+
+class ContinuousCartPoleHard(ContinuousCartPole):
+    def __init__(self, **kwargs):
+        super().__init__(max_steps_in_episode=600, **kwargs)
+
+
+class NoisyCartPole(CartPole):
+    @property
+    def name(self) -> str:
+        """Environment name used by the renderer."""
+        return "NoisyPole"
+
+
+class NoisyCartPoleEasy(NoisyCartPole):
     def __init__(self, **kwargs):
         super().__init__(n_sigma=0.1, max_steps_in_episode=200, **kwargs)
 
 
-class NoisyCartPoleMedium(CartPole):
+class NoisyCartPoleMedium(NoisyCartPole):
     def __init__(self, **kwargs):
         super().__init__(n_sigma=0.2, max_steps_in_episode=200, **kwargs)
 
 
-class NoisyCartPoleHard(CartPole):
+class NoisyCartPoleHard(NoisyCartPole):
     def __init__(self, **kwargs):
         super().__init__(n_sigma=0.3, max_steps_in_episode=200, **kwargs)
