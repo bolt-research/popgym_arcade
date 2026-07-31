@@ -1,9 +1,12 @@
-"""
-This file is to plot the MDP and POMDP results separately.
+"""Usage examples:
 
-Usage example:
-    python plottable.py --entity Your_entity --project Your_project --raw-csv runs.csv \
-        --model-group-csv pqn_gdn_model_group.csv --output-csv obs_gap.csv
+Fetch complete histories from W&B and build all output tables:
+python plotting/download_csv.py \
+    --entity your_entity_name --project your_project_name \
+
+Re-run aggregation from an existing per-step CSV:
+python plotting/download_csv.py \
+    --skip-fetch --raw-csv runs_full_timesteps.csv```
 """
 
 import argparse
