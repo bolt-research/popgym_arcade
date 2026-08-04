@@ -185,6 +185,7 @@ def analyse(args, runs_df):
     normal_dict = [
         "BattleShipEasy", "BattleShipMedium", "BattleShipHard",
         "MineSweeperEasy", "MineSweeperMedium", "MineSweeperHard",
+        "NavigatorEasy", "NavigatorMedium", "NavigatorHard",
         "BreakoutEasy", "BreakoutMedium", "BreakoutHard",
         "TetrisEasy", "TetrisMedium", "TetrisHard",
     ]
